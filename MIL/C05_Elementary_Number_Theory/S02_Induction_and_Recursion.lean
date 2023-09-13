@@ -49,7 +49,16 @@ theorem dvd_fac {i n : ℕ} (ipos : 0 < i) (ile : i ≤ n) : i ∣ fac n := by
 theorem pow_two_le_fac (n : ℕ) : 2 ^ (n - 1) ≤ fac n := by
   rcases n with _ | n
   · simp [fac]
-  sorry
+  induction' n with n ih
+  . simp
+  simp at *
+  rw [fac, pow_succ]
+  apply mul_le_mul
+  . linarith
+  exact ih
+  norm_num
+  norm_num
+
 section
 
 variable {α : Type _} (s : Finset ℕ) (f : ℕ → ℕ) (n : ℕ)
@@ -100,7 +109,11 @@ theorem sum_id (n : ℕ) : (∑ i in range (n + 1), i) = n * (n + 1) / 2 := by
   ring
 
 theorem sum_sqr (n : ℕ) : (∑ i in range (n + 1), i ^ 2) = n * (n + 1) * (2 * n + 1) / 6 := by
-  sorry
+  symm; apply Nat.div_eq_of_eq_mul_right (by norm_num : 0 < 6)
+  induction' n with n ih
+  . simp
+  rw [Finset.sum_range_succ, mul_add 6, ← ih, Nat.succ_eq_add_one]
+  ring
 end
 
 inductive MyNat
@@ -135,13 +148,32 @@ theorem add_comm (m n : MyNat) : add m n = add n m := by
   rw [add, succ_add, ih]
 
 theorem add_assoc (m n k : MyNat) : add (add m n) k = add m (add n k) := by
-  sorry
+  induction' n with n ih
+  . rw [zero_add]
+    rfl
+  rw [add, succ_add, succ_add, add, ih]
+
 theorem mul_add (m n k : MyNat) : mul m (add n k) = add (mul m n) (mul m k) := by
-  sorry
+  induction' k with k ih
+  . rfl
+  rw [mul, add, mul, ih, add_assoc]
+
 theorem zero_mul (n : MyNat) : mul zero n = zero := by
-  sorry
+  induction' n with n ih
+  . rfl
+  rw [mul, ih]
+  rfl
+
 theorem succ_mul (m n : MyNat) : mul (succ m) n = add (mul m n) n := by
-  sorry
+  induction' n with n ih
+  . rfl
+  rw [mul, mul, ih, add_assoc, add_assoc, add_comm n, succ_add]
+  rfl
+
 theorem mul_comm (m n : MyNat) : mul m n = mul n m := by
-  sorry
+  induction' n with n ih
+  . rw [zero_mul]
+    rfl
+  rw [mul, ih, succ_mul]
+
 end MyNat

@@ -59,19 +59,58 @@ example : x < |y| → x < y ∨ x < -y := by
 namespace MyAbs
 
 theorem le_abs_self (x : ℝ) : x ≤ |x| := by
-  sorry
+  rw [le_abs]
+  left; rfl
 
 theorem neg_le_abs_self (x : ℝ) : -x ≤ |x| := by
-  sorry
+  rw [le_abs]
+  right; rfl
 
 theorem abs_add (x y : ℝ) : |x + y| ≤ |x| + |y| := by
-  sorry
+  rw [abs_le]
+  constructor
+  . rw [neg_le]
+    rw [← neg_one_mul (x+y), mul_add, neg_one_mul, neg_one_mul]
+    apply add_le_add
+    repeat apply neg_le_abs_self
+  . apply add_le_add
+    repeat apply le_abs_self
 
 theorem lt_abs : x < |y| ↔ x < y ∨ x < -y := by
-  sorry
+  rcases le_or_gt 0 y with h | h
+  . rw [abs_of_nonneg h]
+    constructor
+    . intro h'
+      left; exact h'
+    . intro h'
+      rcases h'
+      . linarith
+      . linarith
+  . rw [abs_of_neg]
+    constructor
+    . intro h'
+      right; exact h'
+    . intro h'
+      rcases h'
+      . linarith
+      . linarith
+    linarith
 
 theorem abs_lt : |x| < y ↔ -y < x ∧ x < y := by
-  sorry
+  rcases le_or_gt 0 x with h | h
+  . rw [abs_of_nonneg h]
+    constructor
+    . intro h'
+      constructor <;> linarith
+    . intro h'
+      linarith
+  . rw [abs_of_neg]
+    constructor
+    . intro h'
+      constructor <;> linarith
+    . intro h'
+      linarith
+    linarith
 
 end MyAbs
 
@@ -92,23 +131,59 @@ example {m n k : ℕ} (h : m ∣ n ∨ m ∣ k) : m ∣ n * k := by
     apply dvd_mul_right
 
 example {z : ℝ} (h : ∃ x y, z = x ^ 2 + y ^ 2 ∨ z = x ^ 2 + y ^ 2 + 1) : z ≥ 0 := by
-  sorry
+  rcases h with ⟨x, y, rfl | rfl⟩ <;> linarith [sq_nonneg x, sq_nonneg y]
 
 example {x : ℝ} (h : x ^ 2 = 1) : x = 1 ∨ x = -1 := by
-  sorry
+  have h' : x^2 - 1 = 0 := by linarith
+  have h'' : (x + 1) * (x - 1) = 0 := by linarith
+  rcases eq_zero_or_eq_zero_of_mul_eq_zero h'' with h''' | h'''
+  . rw [add_eq_zero_iff_eq_neg] at h'''
+    right; exact h'''
+  . rw [sub_eq_zero] at h'''
+    left; exact h'''
 
 example {x y : ℝ} (h : x ^ 2 = y ^ 2) : x = y ∨ x = -y := by
-  sorry
+  have h' : x^2 - y^2 = 0 := by linarith
+  have h'' : (x + y) * (x - y) = 0 := by linarith
+  rcases eq_zero_or_eq_zero_of_mul_eq_zero h'' with h''' | h'''
+  . rw [add_eq_zero_iff_eq_neg] at h'''
+    right; exact h'''
+  . rw [sub_eq_zero] at h'''
+    left; exact h'''
 
 section
 variable {R : Type _} [CommRing R] [IsDomain R]
 variable (x y : R)
 
 example (h : x ^ 2 = 1) : x = 1 ∨ x = -1 := by
-  sorry
+  have h' : x^2 - 1 = 0 := by
+    rw [sub_eq_zero]
+    exact h
+  have h'' : (x + 1) * (x - 1) = 0 := by
+    calc
+      (x + 1) * (x - 1) = x^2 - 1^2 := by ring
+      _ = x^2 - 1 := by ring
+      _ = 0 := by exact h'
+  rcases eq_zero_or_eq_zero_of_mul_eq_zero h'' with h''' | h'''
+  . rw [add_eq_zero_iff_eq_neg] at h'''
+    right; exact h'''
+  . rw [sub_eq_zero] at h'''
+    left; exact h'''
 
 example (h : x ^ 2 = y ^ 2) : x = y ∨ x = -y := by
-  sorry
+  have h' : x^2 - y^2 = 0 := by
+    rw [sub_eq_zero]
+    exact h
+  have h'' : (x + y) * (x - y) = 0 := by
+    calc
+      (x + y) * (x - y) = x^2 - y^2 := by ring
+      _ = x^2 - y^2 := by ring
+      _ = 0 := by exact h'
+  rcases eq_zero_or_eq_zero_of_mul_eq_zero h'' with h''' | h'''
+  . rw [add_eq_zero_iff_eq_neg] at h'''
+    right; exact h'''
+  . rw [sub_eq_zero] at h'''
+    left; exact h'''
 
 end
 
@@ -125,5 +200,19 @@ example (P : Prop) : ¬¬P → P := by
   contradiction
 
 example (P Q : Prop) : P → Q ↔ ¬P ∨ Q := by
-  sorry
-
+  by_cases h : P
+  . constructor
+    . intro h'
+      right; apply h' h
+    . intro h'
+      rcases h' with hnP | hQ
+      . apply absurd h hnP
+      . intro _; exact hQ
+  . constructor
+    . intro _
+      left; exact h
+    . intro h'
+      rcases h' with hnP | hQ
+      . intro hP
+        apply absurd hP hnP
+      . intro _; exact hQ
