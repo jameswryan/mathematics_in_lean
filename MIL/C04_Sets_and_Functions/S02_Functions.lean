@@ -43,6 +43,7 @@ example : f '' s ⊆ v ↔ s ⊆ f ⁻¹' v := by
     exact mem_of_eq_of_mem (id (Eq.symm fxeq)) (h xs)
 
 example (h : Injective f) : f ⁻¹' (f '' s) ⊆ s := by
+  apply?
 
 
 example : f '' (f ⁻¹' u) ⊆ u := by
